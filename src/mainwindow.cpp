@@ -1377,6 +1377,9 @@ void MainWindow::setupActions()
     act = addAction(QStringLiteral("cut_timeline_clip"), i18n("Cut Clip"), this, SLOT(slotCutTimelineClip()), QIcon::fromTheme(QStringLiteral("edit-cut")),
                     Qt::SHIFT + Qt::Key_R);
 
+    act = addAction(QStringLiteral("cut_timeline_and_delete_previous_clip"), i18n("Cut and Delete Previous Clip"), this, SLOT(slotCutTimelineAndDeletePreviousClip()), QIcon::fromTheme(QStringLiteral("edit-cut")),
+                    Qt::SHIFT + Qt::Key_H);
+
     act = addAction(QStringLiteral("delete_timeline_clip"), i18n("Delete Selected Item"), this, SLOT(slotDeleteItem()),
                     QIcon::fromTheme(QStringLiteral("edit-delete")), Qt::Key_Delete);
 
@@ -2439,6 +2442,34 @@ void MainWindow::slotDeleteAllGuides()
 void MainWindow::slotCutTimelineClip()
 {
     getMainTimeline()->controller()->cutClipUnderCursor();
+}
+
+void MainWindow::slotCutTimelineAndDeletePreviousClip()
+{
+    // Deselect current item under cursor
+    getCurrentTimeline()->controller()->selectCurrentItem(ObjectType::TimelineClip, false);
+
+    // Store previous selection
+    std::unordered_set<int> selection = getCurrentTimeline()->model()->getCurrentSelection();
+    getCurrentTimeline()->model()->requestClearSelection();
+
+    // Do procedure
+    getMainTimeline()->controller()->cutClipUnderCursor();
+    getCurrentTimeline()->controller()->gotoPreviousSnap();
+    getCurrentTimeline()->controller()->selectCurrentItem(ObjectType::TimelineClip, true);
+    getCurrentTimeline()->controller()->deleteSelectedClips();
+    getCurrentTimeline()->controller()->removeSpace();
+
+    // Set the position to the start of the remaining clip
+    getCurrentTimeline()->controller()->gotoPreviousSnap();
+    bool notFirst = getCurrentTimeline()->controller()->timelinePosition() != 0;
+    if (notFirst) {
+        getCurrentTimeline()->controller()->gotoNextSnap();
+    }
+
+    // Restore previous selection
+    getCurrentTimeline()->model()->requestClearSelection();
+    getCurrentTimeline()->model()->requestSetSelection(selection);
 }
 
 void MainWindow::slotInsertClipOverwrite()

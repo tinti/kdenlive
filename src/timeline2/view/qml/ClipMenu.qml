@@ -135,6 +135,11 @@ Menu {
         }
         MenuItem {
             visible: true
+            text: i18n("Split At Playhead and delete Previous Clip")
+            onTriggered: timeline.triggerAction('cut_timeline_and_delete_previous_clip')
+        }
+        MenuItem {
+            visible: true
             text: clipStatus != ClipState.Disabled ? i18n("Disable clip") : i18n("Enable clip")
             onTriggered: timeline.switchEnableState(clipId)
         }
